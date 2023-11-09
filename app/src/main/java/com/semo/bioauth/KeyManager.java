@@ -9,6 +9,7 @@ import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
+import java.security.InvalidKeyException;
 import java.security.KeyStore;
 
 import javax.crypto.Cipher;
@@ -35,7 +36,8 @@ public class KeyManager {
     private KeyStore keyStore;
     private KeyGenerator keyGenerator;
 
-    private Cipher cipher;
+    private static Cipher cipher;
+    private static SecretKey key;
 
 
     /**
@@ -71,24 +73,34 @@ public class KeyManager {
      */
     @RequiresApi(api = Build.VERSION_CODES.M)
     public Boolean cipherInit() {
-        Log.d("cipher_change", "Here init");
         try {
             cipher = Cipher.getInstance(KeyProperties.KEY_ALGORITHM_AES + "/"
                     + KeyProperties.BLOCK_MODE_CBC + "/"
                     + KeyProperties.ENCRYPTION_PADDING_PKCS7);
-
-            SecretKey key = (SecretKey) keyStore.getKey(KEY_NAME, null);
+            key = (SecretKey) keyStore.getKey(KEY_NAME, null);
             cipher.init(Cipher.ENCRYPT_MODE, key);
             return true;
-        } catch(KeyPermanentlyInvalidatedException e){
-            e.printStackTrace();
-            Log.d("cipher_change", e.toString());
-
         }catch (Exception e) {
             e.printStackTrace();
         }
 
         return false;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    public static boolean check(){
+        if(cipher != null){
+            try{
+                cipher.init(Cipher.ENCRYPT_MODE, key);
+            }catch(KeyPermanentlyInvalidatedException e){
+                e.printStackTrace();
+                return false;
+            } catch (InvalidKeyException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return true;
     }
 
     public Cipher getCipher() {

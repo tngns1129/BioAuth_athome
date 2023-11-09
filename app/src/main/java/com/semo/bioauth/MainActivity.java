@@ -23,6 +23,7 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout layout;
     private Button button;
     private TextView title;
+    private Button check;
 
     private BioAuthManager bioAuthManager;
 
@@ -38,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
         layout = new LinearLayout(this);
         title = new TextView(this);
         button = new Button(this);
+        check = new Button(this);
 
 
         ViewGroup.LayoutParams layoutParams = new LinearLayout.LayoutParams(
@@ -51,16 +53,28 @@ public class MainActivity extends AppCompatActivity {
         title.setText("생체 인증 테스트 앱");
 
         button.setText("생체 인증");
+        check.setText("변화감지");
 
         layout.addView(title);
         layout.addView(button);
+        layout.addView(check);
 
         setContentView(layout);
 
 
         button.setOnClickListener(view -> {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                bioAuthManager.authenticate(this ,getApplicationContext());
+                bioAuthManager.authenticate(this , getApplicationContext());
+            }
+        });
+
+        check.setOnClickListener(view -> {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if(bioAuthManager.check()){
+                    Log.d("MY_APP", "인증 변화 감지안됨");
+                }else{
+                    Log.d("MY_APP", "인증 변화 감지됨");
+                }
             }
         });
 

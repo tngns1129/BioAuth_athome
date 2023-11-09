@@ -61,8 +61,9 @@ public class BioAuthManager {
     private boolean canAuthenticate(Activity activity, Context context){
 
         Intent intent;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
         {
+            Log.d("MY_APP", Integer.toString(Build.VERSION.SDK_INT));
             BiometricManager biometricManager = BiometricManager.from(context);
             switch (biometricManager.canAuthenticate(BIOMETRIC_STRONG))
             {
@@ -81,32 +82,37 @@ public class BioAuthManager {
 
                     intent = new Intent(Settings.ACTION_FINGERPRINT_ENROLL);
                     intent.putExtra(Settings.EXTRA_BIOMETRIC_AUTHENTICATORS_ALLOWED,
-                            BIOMETRIC_STRONG | DEVICE_CREDENTIAL);
+                            BIOMETRIC_STRONG);
                     activity.startActivityForResult(intent, REQUEST_FINGERPRINT_ENROLLMENT_AUTH);
                     return false;
+                default:
+                    Log.d("MY_APP", "whyyyyyyyy");
             }
         }
-        else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+        else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
         {
+            fingerprintManager = (FingerprintManager) context.getSystemService(FINGERPRINT_SERVICE);
+            keyguardManager = (KeyguardManager) context.getSystemService(KEYGUARD_SERVICE);
+            Log.d("MY_APP", "here2");
             if (!fingerprintManager.isHardwareDetected()) // 지문을 사용할 수 없는 디바이스인 경우
             {
-                Log.d("fingerprint", "it is not device that can use fingerprint");
+                Log.d("MY_APP", "it is not device that can use fingerprint");
                 return false;
             }
             // 지문 인증 사용을 거부한 경우
             else if (ContextCompat.checkSelfPermission(context, Manifest.permission.USE_FINGERPRINT) != PackageManager.PERMISSION_GRANTED)
             {
-                Log.d("fingerprint", "permission denied");
+                Log.d("MY_APP", "permission denied");
                 return false;
             }
             else if (!keyguardManager.isKeyguardSecure()) // 잠금 화면이 설정되지 않은 경우
             {
-                Log.d("fingerprint", "please set lock screen");
+                Log.d("MY_APP", "please set lock screen");
                 return false;
             }
             else if (!fingerprintManager.hasEnrolledFingerprints()) // 등록된 지문이 없는 경우
             {
-                Log.d("fingerprint", "please enroll fingerprint");
+                Log.d("MY_APP", "please enroll fingerprint");
                 intent = new Intent(Settings.ACTION_SECURITY_SETTINGS);
                 activity.startActivityForResult(intent, REQUEST_FINGERPRINT_ENROLLMENT_AUTH);
                 return false;
@@ -114,38 +120,38 @@ public class BioAuthManager {
 
             return true;
         }
-
+        Log.d("MY_APP", "here3");
         return false;
     }
 
 
-    public void authenticate(FragmentActivity activity, Context context) {
+    public void authenticate(Activity activity, Context context) {
 
         keyManager = KeyManager.getInstance();
         // api 28 ( ANDROID 9.0 ) 이상은 biometricPrompt 사용
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            Log.d("bioAuth", "start biometricPrompt");
+            Log.d("MY_APP", "start biometricPrompt here");
 
             if (canAuthenticate(activity, context))
             {
                 executor = ContextCompat.getMainExecutor(context);
-                biometricPrompt = new BiometricPrompt(activity, executor, new BiometricPrompt.AuthenticationCallback() {
+                biometricPrompt = new BiometricPrompt((FragmentActivity) activity, executor, new BiometricPrompt.AuthenticationCallback() {
                     @Override
                     public void onAuthenticationError(int errorCode, @NonNull CharSequence errString) {
                         super.onAuthenticationError(errorCode, errString);
-                        Log.d("bioAuth", errString.toString());
+                        Log.d("MY_APP", errString.toString());
                     }
 
                     @Override
                     public void onAuthenticationSucceeded(@NonNull BiometricPrompt.AuthenticationResult result) {
                         super.onAuthenticationSucceeded(result);
-                        Log.d("bioAuth", "auth success");
+                        Log.d("MY_APP", "auth success");
                     }
 
                     @Override
                     public void onAuthenticationFailed() {
                         super.onAuthenticationFailed();
-                        Log.d("bioAuth", "auth failed");
+                        Log.d("MY_APP", "auth failed");
                     }
                 });
 
@@ -177,7 +183,7 @@ public class BioAuthManager {
         }
         else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)// api 23 ( ANDROID 6.0 ) 부터 api 28 ( ANDROID 9.0 ) 까지는 fingerprint 사용
         {
-            Log.d("fingerprint", "fingerprint start");
+            Log.d("MY_APP", "fingerprint start");
 
             fingerprintManager = (FingerprintManager) context.getSystemService(FINGERPRINT_SERVICE);
             keyguardManager = (KeyguardManager) context.getSystemService(KEYGUARD_SERVICE);
@@ -201,7 +207,7 @@ public class BioAuthManager {
 //            else
             if (canAuthenticate(activity, context))
             {
-                Log.d("fingerprint", "requirement fingerprint needed all pass");
+                Log.d("MY_APP", "requirement fingerprint needed all pass");
 
                 keyManager.generateKey();
 
@@ -216,27 +222,27 @@ public class BioAuthManager {
                         @Override
                         public void onAuthenticationError(int errorCode, CharSequence errString) {
                             super.onAuthenticationError(errorCode, errString);
-                            Log.d("fingerprint", String.valueOf(errorCode));
+                            Log.d("MY_APP", "fingerprint " + errorCode);
                         }
 
                         @Override
                         public void onAuthenticationSucceeded(FingerprintManager.AuthenticationResult result) {
                             super.onAuthenticationSucceeded(result);
-                            Log.d("fingerprint", "auth success");
+                            Log.d("MY_APP", "fingerprint auth success");
 
                         }
 
                         @Override
                         public void onAuthenticationFailed() {
                             super.onAuthenticationFailed();
-                            Log.d("fingerprint", "auth failed");
+                            Log.d("MY_APP", "fingerprint auth failed");
 
                         }
 
                         @Override
                         public void onAuthenticationHelp(int helpCode, CharSequence helpString) {
                             super.onAuthenticationHelp(helpCode, helpString);
-                            Log.d("fingerprint", helpString.toString());
+                            Log.d("MY_APP", "fingerprint" + helpString.toString());
                         }
 
                     }, null);
@@ -247,5 +253,7 @@ public class BioAuthManager {
     }
 
 
-
+    public boolean check() {
+        return KeyManager.check();
+    }
 }
